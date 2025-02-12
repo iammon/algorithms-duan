@@ -124,8 +124,112 @@ def find_e(phi_n):
         if math.gcd(e, phi_n) == 1:
             return e
         
-def main():
-    RSA_key_generation()
+# read private key (d, n) from d_n.txt
+def read_private_key():
+    with open("d_n.txt", "r") as file:
+        d = int(file.readline().strip())
+        n = int(file.readline().strip())
+    return d, n
 
-if __name__ == "__main__":
-    main()
+# read public key (e, n) from e_n.txt
+def read_public_key():
+    with open("e_n.txt", "r") as file:
+        e = int(file.readline().strip())
+        n = int(file.readline().strip())
+    return e, n
+
+# sign file using RSA private key
+def Signing(doc, key):
+    d, n = key
+
+    # read original file content
+    with open(doc, "rb") as file:
+        content = file.read()
+
+    # sha-256 hash of file content
+    hash_value = hashlib.sha256(content).digest()
+    hash_int = int.from_bytes(hash_value, byteorder="big")
+
+    # signing
+    signature = pow(hash_int, d, n)
+
+    # convert signature to 64-byte for appending to original content
+    # because n is slightly less than 512 bits (64 bytes)
+    signature_bytes = signature.to_bytes(64, byteorder="big", signed=False)
+
+    # save signed file
+    signed_file = doc + ".signed"
+    with open(signed_file, "wb") as file:
+        # write the original file content
+        file.write(content)
+        # append the signature
+        file.write(signature_bytes)
+
+    print("\nSigned ...")
+    return signed_file
+
+# verify signed file
+def verification(doc, key):
+    e, n = key
+
+    # read signed file
+    with open(doc, "rb") as file:
+        content = file.read()
+
+    # everything except the last 64 bytes
+    original_content = content[:-64]
+
+    # the last 64 bytes (signature)
+    signature_bytes = content[-64:]
+
+    # compute sha-256 of the extracted original file
+    new_hash_value = hashlib.sha256(original_content).digest()
+    new_hash_int = int.from_bytes(new_hash_value, byteorder="big")
+
+    # convert signature_bytes to int
+    signature_int = int.from_bytes(signature_bytes, byteorder="big")
+
+    # verify
+    decrypted_signature = pow(signature_int, e, n)
+
+    # compare decrypt with new hash
+    if decrypted_signature == new_hash_int:
+        print("\nAuthentic!")
+    else:
+        print("\nModified!")
+    
+    return decrypted_signature == new_hash_int
+
+# No need to change the main function.
+# 
+def CPSC_435_Project1(part, task="", fileName=""):
+    # part I, command-line arguments will be: python yourProgram.py 1
+    if part == 1:
+        RSA_key_generation()
+    # part II, command-line will be for example: python yourProgram.py 2 s file.txt
+    #                                       or   python yourProgram.py 2 v file.txt.signed
+    else:
+        if "s" in task:  # do signing
+            doc = fileName   # you figure out
+            key = read_private_key()   # you figure out
+            Signing(doc, key)
+        else:
+            # do verification
+            doc = fileName   # you figure out
+            key = read_public_key()   # you figure out
+            verification(doc, key)
+
+    print("done!")
+    
+    return
+
+# when we grade your part 1 - RSA_key_generation
+CPSC_435_Project1(1)
+
+# when we grade your part 2a - signing
+docName = "contract.txt" # the fileName is just an example
+CPSC_435_Project1(2, "s", docName)
+
+# when we grade your part 2b - verification
+docName = "contract.txt.signed" # the fileName is just an example
+CPSC_435_Project1(2, "v", docName)
