@@ -77,8 +77,7 @@ def RSA_key_generation():
     _, d, _ = extended_euclidean(e, phi_n)
 
     # make sure d is positive
-    if d < 0:
-        d = d % phi_n
+    d = d % phi_n if d < 0 else d
 
     # open a file in write mode ('w') and save integers
     with open('p_q.txt', 'w') as file:
@@ -171,7 +170,7 @@ def Signing(doc, key):
 
     # convert signature to 64-byte for appending to original content
     # because n is slightly less than 512 bits (64 bytes)
-    signature_bytes = signature.to_bytes(64, byteorder="big", signed=False)
+    signature_bytes = signature.to_bytes((n.bit_length() + 7) // 8, byteorder="big", signed=False)
 
     # save signed file
     signed_file = doc + ".signed"
@@ -192,11 +191,16 @@ def verification(doc, key):
     with open(doc, "rb") as file:
         content = file.read()
 
-    # everything except the last 64 bytes
-    original_content = content[:-64]
+    # determine signature size dynamically
+    sig_size = (n.bit_length() + 7) // 8
 
-    # the last 64 bytes (signature)
-    signature_bytes = content[-64:]
+    # extract original content and signature
+    if len(content) < sig_size:
+        print("\nError: File too small to contain a valid signature.")
+        return False
+
+    original_content = content[:-sig_size]
+    signature_bytes = content[-sig_size:]
 
     # compute sha-256 of the extracted original file
     new_hash_value = hashlib.sha256(original_content).digest()
@@ -205,7 +209,12 @@ def verification(doc, key):
     # convert signature_bytes to int
     signature_int = int.from_bytes(signature_bytes, byteorder="big")
 
-    # verify
+    # prevent invalid signature crash
+    if signature_int >= n:
+        print("\nError: Signature is invalid (too large).")
+        return False
+
+    # decrypt
     decrypted_signature = mod_exp(signature_int, e, n)
 
     # compare decrypt with new hash
