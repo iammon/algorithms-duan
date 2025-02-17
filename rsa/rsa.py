@@ -6,7 +6,6 @@ import numpy as np
 import hashlib
 import random
 import time
-import math
 
 print (hashlib.algorithms_guaranteed)
 
@@ -41,6 +40,12 @@ def FermatPrimalityTest(p):
         if pow(base, p-1, p) != 1:
             return a
     return True
+
+# check for gcd
+def gcd(a, b):
+    while b:
+        a, b = b, a % b
+    return a
 
 # you need to modify this function to generate two pairs of keys
 def RSA_key_generation():
@@ -114,14 +119,14 @@ def find_e(phi_n):
     e = 65537
     
     # check if e is coprime with phi_n
-    if math.gcd(e, phi_n) == 1:
+    if gcd(e, phi_n) == 1:
         return e
     
     # if 65537 isn't valid, we pick a different e
     while True:
         # make e range from 3 to phi_n and increment by 2 for odd
         e = random.randrange(3, phi_n, 2)
-        if math.gcd(e, phi_n) == 1:
+        if gcd(e, phi_n) == 1:
             return e
         
 # read private key (d, n) from d_n.txt
