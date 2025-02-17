@@ -37,7 +37,7 @@ def FermatPrimalityTest(p):
         base = random.randint(2, p-2)
 
         # check if base^(p-1) is congruent to 1 (mod p)
-        if pow(base, p-1, p) != 1:
+        if mod_exp(base, p-1, p) != 1:
             return a
     return True
 
@@ -46,6 +46,18 @@ def gcd(a, b):
     while b:
         a, b = b, a % b
     return a
+
+# modular exponentiation
+def mod_exp(base, exp, mod):
+    result = 1
+    base = base % mod
+
+    while exp > 0:
+        if exp % 2 == 1:
+            result = (result * base) % mod
+        base = (base * base) % mod
+        exp //= 2
+    return result
 
 # you need to modify this function to generate two pairs of keys
 def RSA_key_generation():
@@ -62,12 +74,11 @@ def RSA_key_generation():
 
     e = find_e(phi_n)
 
-    gcd, d, _ = extended_euclidean(e, phi_n)
+    _, d, _ = extended_euclidean(e, phi_n)
 
     # make sure d is positive
     if d < 0:
-        d += phi_n
-    
+        d = d % phi_n
 
     # open a file in write mode ('w') and save integers
     with open('p_q.txt', 'w') as file:
@@ -104,14 +115,14 @@ def extended_euclidean(a, b):
         # base case
         return a, 1, 0
     # recursive step
-    gcd, x1, y1 = extended_euclidean(b, a % b)
+    _, x1, y1 = extended_euclidean(b, a % b)
 
     # update x and y using result from recursion
     x = y1
     y = x1 - (a // b) * y1
 
     #return gcd, x (modular inverse), and y (coefficient for b)
-    return gcd, x, y
+    return a, x, y
 
 # finding public key (e)
 def find_e(phi_n):
@@ -156,7 +167,7 @@ def Signing(doc, key):
     hash_int = int.from_bytes(hash_value, byteorder="big")
 
     # signing
-    signature = pow(hash_int, d, n)
+    signature = mod_exp(hash_int, d, n)
 
     # convert signature to 64-byte for appending to original content
     # because n is slightly less than 512 bits (64 bytes)
@@ -195,7 +206,7 @@ def verification(doc, key):
     signature_int = int.from_bytes(signature_bytes, byteorder="big")
 
     # verify
-    decrypted_signature = pow(signature_int, e, n)
+    decrypted_signature = mod_exp(signature_int, e, n)
 
     # compare decrypt with new hash
     if decrypted_signature == new_hash_int:
