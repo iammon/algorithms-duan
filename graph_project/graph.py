@@ -42,7 +42,6 @@ class WeightedGraph:
         for vertex, edges in self.adjacency_list.items():
             print(f"{vertex}: {edges}")
 
-
 def load_graph_from_file(filename):
     graph = WeightedGraph()
     with open(filename, 'r') as file:
@@ -75,27 +74,24 @@ def load_graph_from_file(filename):
 
     return graph
 
-
 def displayDirectRoutes(graph):
     city_count = len(graph.adjacency_list)
 
-    # Use a set to avoid counting duplicate (undirected) edges
+    # Count total undirected unique edges
     seen_edges = set()
     for city, neighbors in graph.adjacency_list.items():
-        for neighbor, (distance, cost) in neighbors:
+        for neighbor, _ in neighbors:
             edge = tuple(sorted((city, neighbor)))
             seen_edges.add(edge)
+    total_connections = len(seen_edges)
 
-    edge_count = len(seen_edges)
-    print(f"There are {city_count} cities and {edge_count} direct connections.\n")
+    print(f"There are {city_count} cities and {total_connections} direct connections.\n")
 
-    for city in graph.adjacency_list:
+    for city in sorted(graph.adjacency_list.keys()):
         print(f"({city}):")
         for neighbor, (distance, cost) in graph.adjacency_list[city]:
-            if city < neighbor:  # Only print one direction
-                print(f"   {city}-{neighbor}, {distance} miles, ${cost:.2f}")
+            print(f"   {city}-{neighbor}, {distance} miles, ${cost:.2f}")
         print()
-
 
 def main():
     filename = "airline1.txt"  # Replace with your actual file path if needed
