@@ -44,24 +44,23 @@ class WeightedGraph:
 
 def load_graph_from_file(filename):
     graph = WeightedGraph()
+    connections = []  # store connections in original direction
+
     with open(filename, 'r') as file:
         lines = file.readlines()
 
-    # Step 1: Number of cities
     city_count = int(lines[0].strip())
-
-    # Step 2: City names
     city_names = {}
+
     for i in range(city_count):
         city_name = lines[1 + i].strip()
         graph.add_vertex(city_name)
-        city_names[i + 1] = city_name  # 1-based indexing
+        city_names[i + 1] = city_name
 
-    # Step 3: Routes
     for line in lines[1 + city_count:]:
         parts = line.strip().split()
         if len(parts) != 4:
-            continue  # skip malformed lines
+            continue
         city1_index = int(parts[0])
         city2_index = int(parts[1])
         distance = int(parts[2])
@@ -71,33 +70,30 @@ def load_graph_from_file(filename):
         city2 = city_names[city2_index]
 
         graph.add_edge(city1, city2, (distance, cost))
+        connections.append((city1, city2, distance, cost))  # only one direction
 
-    return graph
+    return graph, connections
 
-def displayDirectRoutes(graph):
+def displayDirectRoutes(graph, connections):
     city_count = len(graph.adjacency_list)
 
-    # Count total undirected unique edges
-    seen_edges = set()
-    for city, neighbors in graph.adjacency_list.items():
-        for neighbor, _ in neighbors:
-            edge = tuple(sorted((city, neighbor)))
-            seen_edges.add(edge)
-    total_connections = len(seen_edges)
+    # Count unique undirected connections
+    unique_connections = set(tuple(sorted((src, dst))) for src, dst, *_ in connections)
+    total_connections = len(unique_connections)
 
     print(f"There are {city_count} cities and {total_connections} direct connections.\n")
 
-    for city in sorted(graph.adjacency_list.keys()):
+    for city in graph.adjacency_list:
         print(f"({city}):")
-        for neighbor, (distance, cost) in graph.adjacency_list[city]:
-            print(f"   {city}-{neighbor}, {distance} miles, ${cost:.2f}")
+        for src, dst, distance, cost in connections:
+            if city == src or city == dst:
+                print(f"   {src}-{dst}, {distance} miles, ${cost:.2f}")
         print()
 
 def main():
-    filename = "airline1.txt"  # Replace with your actual file path if needed
-    graph = load_graph_from_file(filename)
-    displayDirectRoutes(graph)
-
+    filename = "airline1.txt"
+    graph, connections = load_graph_from_file(filename)
+    displayDirectRoutes(graph, connections)
 
 if __name__ == "__main__":
     main()
