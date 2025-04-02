@@ -1,3 +1,6 @@
+import heapq
+from collections import deque
+
 class WeightedGraph:
     def __init__(self):
         # Initialize an empty dictionary to represent the adjacency list
@@ -144,12 +147,94 @@ def displayMSTServiceRoute(graph):
 
     print()
 
+def shortestPath(graph, cost_type, start, end):
+    if start not in graph.adjacency_list or end not in graph.adjacency_list:
+        print(f"Either {start} or {end} does not exist in the graph.")
+        return
+
+    if cost_type == "distance":
+        cost_index = 0
+        label = "miles"
+        title = f"Shortest distance from ({start}) to ({end}):"
+    elif cost_type == "price":
+        cost_index = 1
+        label = "$"
+        title = f"Cheapest path from ({start}) to ({end}):"
+    elif cost_type == "stops":
+        return shortestPathByStops(graph, start, end)
+    else:
+        print("Invalid cost type.")
+        return
+
+    # Dijkstra’s algorithm
+    pq = [(0, start, [])]  # (total cost, current city, path)
+    visited = set()
+
+    while pq:
+        total_cost, current, path = heapq.heappop(pq)
+        if current in visited:
+            continue
+        visited.add(current)
+        path = path + [current]
+
+        if current == end:
+            # Print header
+            if cost_type == "price":
+                print(f"{title} ${total_cost:.2f}.")
+            else:
+                print(f"{title} {total_cost} {label}.")
+            # Print path and cost of each link
+            for i in range(len(path) - 1):
+                for neighbor, (dist, price) in graph.adjacency_list[path[i]]:
+                    if neighbor == path[i+1]:
+                        segment_cost = (dist, price)[cost_index]
+                        if cost_type == "price":
+                            print(f"{path[i]}")
+                            print(f"   ...{path[i+1]} : {segment_cost:.2f}")
+                        else:
+                            print(f"{path[i]}")
+                            print(f"   ...{path[i+1]} : {segment_cost}")
+                        break
+            print()  # Add this blank line for formatting
+            return
+
+        for neighbor, (dist, price) in graph.adjacency_list[current]:
+            if neighbor not in visited:
+                cost = (dist, price)[cost_index]
+                heapq.heappush(pq, (total_cost + cost, neighbor, path))
+
+    print(f"No path found from {start} to {end}.\n")
+
+def shortestPathByStops(graph, start, end):
+    queue = deque([(start, [start])])
+    visited = set()
+
+    while queue:
+        current, path = queue.popleft()
+        if current == end:
+            print(f"Path with least stops from ({start}) to ({end}): {len(path) - 1} stops.")
+            for i in range(len(path) - 1):
+                print(f"{path[i]}")
+                print(f"   ...{path[i+1]}")
+            print()  # Add this blank line to match formatting
+            return
+
+        visited.add(current)
+        for neighbor, _ in graph.adjacency_list[current]:
+            if neighbor not in visited:
+                queue.append((neighbor, path + [neighbor]))
+
+    print(f"No path found from {start} to {end}.\n")
 
 def main():
     filename = "airline1.txt"
     graph, connections = load_graph_from_file(filename)
     displayDirectRoutes(graph, connections)
     displayMSTServiceRoute(graph)
+    print("Testing shortest path from Akron to Cincinnati:")
+    shortestPath(graph, "distance", "Akron", "Cincinnati")
+    shortestPath(graph, "price", "Akron", "Cincinnati")
+    shortestPath(graph, "stops", "Akron", "Cincinnati")
 
 if __name__ == "__main__":
     main()
