@@ -90,10 +90,66 @@ def displayDirectRoutes(graph, connections):
                 print(f"   {src}-{dst}, {distance} miles, ${cost:.2f}")
         print()
 
+# display the MST
+def displayMSTServiceRoute(graph):
+    print("*** MINIMUM SPANNING TREE ***")
+    print("(The edges in the MST based on distance):")
+
+    # Step 1: Gather all edges (avoid duplicates in undirected graph)
+    edges = set()
+    for src in graph.adjacency_list:
+        for dst, (distance, cost) in graph.adjacency_list[src]:
+            edge = tuple(sorted((src, dst)))
+            edges.add((edge[0], edge[1], distance, cost))  # sorted src, dst
+
+    # Step 2: Sort edges by distance (for Kruskal's algorithm)
+    sorted_edges = sorted(edges, key=lambda x: x[2])  # sort by distance
+
+    # Step 3: Union-Find setup
+    parent = {}
+    rank = {}
+
+    def find(x):
+        if parent[x] != x:
+            parent[x] = find(parent[x])
+        return parent[x]
+
+    def union(x, y):
+        xroot = find(x)
+        yroot = find(y)
+        if xroot == yroot:
+            return False  # already connected
+        if rank[xroot] < rank[yroot]:
+            parent[xroot] = yroot
+        else:
+            parent[yroot] = xroot
+            if rank[xroot] == rank[yroot]:
+                rank[xroot] += 1
+        return True
+
+    # Initialize disjoint set
+    for city in graph.adjacency_list:
+        parent[city] = city
+        rank[city] = 0
+
+    # Step 4: Build MST
+    mst = []
+    for src, dst, distance, cost in sorted_edges:
+        if union(src, dst):
+            mst.append((src, dst, distance, cost))
+
+    # Step 5: Print MST edges
+    for src, dst, distance, cost in mst:
+        print(f"{src}-{dst}, {distance} miles, ${cost:.2f}")
+
+    print()
+
+
 def main():
     filename = "airline1.txt"
     graph, connections = load_graph_from_file(filename)
     displayDirectRoutes(graph, connections)
+    displayMSTServiceRoute(graph)
 
 if __name__ == "__main__":
     main()
