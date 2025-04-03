@@ -2,7 +2,7 @@ import heapq
 from collections import deque
 
 # used for displayDirectRoutes()
-global_connections = []  
+global_connections = []
 
 class WeightedGraph:
     def __init__(self):
@@ -18,7 +18,9 @@ class WeightedGraph:
         if vertex2 not in self.adjacency_list:
             self.add_vertex(vertex2)
         self.adjacency_list[vertex1].append((vertex2, weight))
-        self.adjacency_list[vertex2].append((vertex1, weight))  # undirected
+
+        # undirected
+        self.adjacency_list[vertex2].append((vertex1, weight))
 
     def remove_edge(self, vertex1, vertex2):
         if vertex1 in self.adjacency_list:
@@ -82,7 +84,9 @@ def A_Project2(airlineDataFileName):
 
 def load_graph_from_file(filename):
     graph = WeightedGraph()
-    connections = []  # store connections in original direction
+
+    # store connections in original direction
+    connections = []
 
     with open(filename, 'r') as file:
         lines = file.readlines()
@@ -108,7 +112,9 @@ def load_graph_from_file(filename):
         city2 = city_names[city2_index]
 
         graph.add_edge(city1, city2, (distance, cost))
-        connections.append((city1, city2, distance, cost))  # only one direction
+
+        # only one direction
+        connections.append((city1, city2, distance, cost))
 
     return graph, connections
 
