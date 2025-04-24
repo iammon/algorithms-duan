@@ -35,7 +35,7 @@ def read_pgm(fname):
         width, height = map(int, line.split())
         max_gray = int(f.readline().strip())
 
-        # Robust: read all remaining pixels as a flat list
+        # Read all remaining pixels as a flat list
         data = []
         for line in f:
             if line.strip() == '':
@@ -62,7 +62,7 @@ def save_pgm(fname, img, max_gray):
         for row in img:
             f.write(" ".join(map(str, row)) + "\n")
 
-# ---------- Optimized Energy Function ----------
+# ---------- Energy Function ----------
 def compute_energy(img):
     arr = np.array(img, dtype=int)
     print(f"Computing energy for shape: {arr.shape}")
@@ -73,7 +73,7 @@ def compute_energy(img):
     left  = np.roll(arr, 1, axis=1)
     right = np.roll(arr, -1, axis=1)
 
-    # Clamp edge values to avoid wrapping
+    # Avoid wrapping
     up[0, :] = arr[0, :]
     down[-1, :] = arr[-1, :]
     left[:, 0] = arr[:, 0]
